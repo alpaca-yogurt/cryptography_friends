@@ -10,7 +10,8 @@ Score plaintext generated from single character XOR on target string
 def get_scored_text(target: bytearray) -> list[tuple[chr, str, int]]:
     chars = utils.get_bytearray_of_all_characters()
     scored_text = [
-        (chr(key), out := utils.single_byte_xor(key, target).decode(), utils.score_english_text(out)) for key in chars
+        (chr(key), out := utils.single_byte_xor(key, target).decode(errors="ignore"), utils.score_english_text(out))
+        for key in chars
     ]
     scored_text.sort(key=lambda score: score[2], reverse=True)
     return scored_text
