@@ -30,3 +30,23 @@ def test_fixed_xor():
         bytearray.fromhex("1c0111001f010100061a024b53535009181c"),
         bytearray.fromhex("686974207468652062756c6c277320657965"),
     ) == bytearray(b"the kid don't play")
+
+
+def test_get_bytearray_of_all_characters():
+    assert (
+        get_bytearray_of_all_characters()
+        == b" !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~"
+    )
+
+
+def test_single_byte_xor():
+    assert (
+        single_byte_xor(
+            ord("X"), bytearray.fromhex("1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736")
+        )
+    ) == b"Cooking MC's like a pound of bacon"
+
+
+def test_score_english_text():
+    # see comment in function
+    assert (score_english_text("Cooking MC's like a pound of bacon")) == 230
