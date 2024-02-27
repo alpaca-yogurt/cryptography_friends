@@ -48,8 +48,24 @@ def score_english_text(text: str) -> int:
     return count * total
 
 
-def repeating_key_xor(key: tuple[int], buffer: bytearray) -> bytearray:
+def repeating_key_xor(key: bytearray, buffer: bytearray) -> bytearray:
     from itertools import cycle as c
 
     cycle = c(key)
     return bytearray(b ^ next(cycle) for b in buffer)
+
+
+def hamming_distance(s1: bytearray, s2: bytearray) -> int:
+    """
+    Hamming distance is defined as the difference in bits by the authors of the challenge.
+    With that in mind, we can calculate the difference by XORing each byte
+    then we can construct a string that represents the bits that includes zero padding.
+    Finally, we just count the 1s to determine the difference.
+    """
+    match s1, s2:
+        case [bytearray(), bytearray()]:
+            bits = (b1 ^ b2 for b1, b2 in zip(s1, s2))
+            return "".join((bin(b)[2:].zfill(8) for b in bits)).count('1')
+        case _:
+            raise ValueError("str_hamming_distance only takes in 2 bytearrays")
+
