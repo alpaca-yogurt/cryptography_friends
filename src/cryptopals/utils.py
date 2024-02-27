@@ -17,7 +17,7 @@ def fixed_xor(b1: bytearray, b2: bytearray) -> bytearray:
 
     match (b1, b2):
         case [bytearray(), bytearray()]:
-            return bytearray([i ^ v for i, v in zip(b1, b2)])
+            return bytearray(i ^ v for i, v in zip(b1, b2))
         case _:
             raise ValueError(f"fixed_xor requires the buffers to be bytearrays")
 
@@ -29,7 +29,7 @@ def get_bytearray_of_all_characters() -> bytearray:
 def single_byte_xor(single_character_key: int, buffer: bytearray) -> bytearray:
     match single_character_key, buffer:
         case [int(), bytearray()]:
-            return bytearray([b ^ single_character_key for b in buffer])
+            return bytearray(b ^ single_character_key for b in buffer)
         case _:
             raise ValueError("single_byte_xor requires an int representing your key and a bytearray")
 
@@ -46,3 +46,10 @@ def score_english_text(text: str) -> int:
     count = sum(1 for v in characters_of_interest_dict.values() if v != 0)
     total = sum(v for v in characters_of_interest_dict.values())
     return count * total
+
+
+def repeating_key_xor(key: tuple[int], buffer: bytearray) -> bytearray:
+    from itertools import cycle as c
+
+    cycle = c(key)
+    return bytearray(b ^ next(cycle) for b in buffer)
