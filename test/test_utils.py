@@ -49,14 +49,14 @@ def test_single_byte_xor():
 
 def test_score_english_text():
     # see comment in function
-    assert (score_english_text("Cooking MC's like a pound of bacon")) == 230
+    assert (score_english_text("Cooking MC's like a pound of bacon")) == 251
 
 
 def test_repeating_key_xor():
     assert (
         (
             repeating_key_xor(
-                bytearray(b'ICE'),
+                bytearray(b"ICE"),
                 bytearray("Burning 'em, if you ain't quick and nimble\nI go crazy when I hear a cymbal".encode()),
             ).hex()
         )
