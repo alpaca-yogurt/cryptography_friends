@@ -1,4 +1,6 @@
 import base64
+from Crypto.Cipher import AES
+from Crypto.Util.Padding import pad, unpad
 
 
 def hex_to_base64(_hex: bytearray) -> bytearray:
@@ -133,3 +135,47 @@ def solve_repeating_key_xor(
         print(n, repeating_key_xor(key, buffer))
 
     return repeating_key_xor(keys[0], buffer)
+
+
+def pkcs_pad_buffer(buffer: bytearray, block_size: int = 16) -> bytearray:
+    """
+    pkcs#7 assuming default block size is 16
+    """
+    m = block_size - (len(buffer) % block_size)
+    buffer += m * bytearray([m])
+    return buffer
+
+
+def ecb_aes_decrypt(block: bytes, key: bytes):
+    cipher = AES.new(key, AES.MODE_ECB)
+    return cipher.decrypt(block)
+
+
+def ecb_aes_encrypt(block: bytes, key: bytes):
+    cipher = AES.new(key, AES.MODE_ECB)
+    return cipher.encrypt(block)
+
+
+def cbc_aes_decrypt(target_block, xor_block, key) -> bytes:
+    block = ecb_aes_decrypt(target_block, key)
+    return bytes(b1 ^ b2 for b1, b2 in zip(block, xor_block))
+
+
+def cbc_solve(blocks: list[bytes], key: bytes, iv: bytes) -> bytes:
+    answer = bytes()
+    for i in range(len(blocks) - 1, -1, -1):
+        if i == 0:
+            answer = cbc_aes_decrypt(blocks[0], iv, key) + answer
+            return unpad(answer, AES.block_size)
+        else:
+            answer = cbc_aes_decrypt(blocks[i], blocks[i - 1], key) + answer
+
+
+def recursive_cbc_solve(acc: bytes, blocks: list[bytes], key: bytes, iv: bytes, idx: int = 1) -> bytes:
+    target_idx = len(blocks) - idx
+    if target_idx == 0:
+        acc = unpad(cbc_aes_decrypt(blocks[target_idx], iv, key) + acc, AES.block_size)
+        return acc
+    return recursive_cbc_solve(
+        cbc_aes_decrypt(blocks[target_idx], blocks[target_idx - 1], key) + acc, blocks, key, iv, idx + 1
+    )

@@ -66,3 +66,39 @@ def test_repeating_key_xor():
 
 def test_hamming_distance():
     assert (hamming_distance(bytearray(b"this is a test"), bytearray(b"wokka wokka!!!"))) == 37
+
+
+def test_pkcs_pad_buffer():
+    assert pkcs_pad_buffer(bytearray("YELLOW SUBMARINE".encode()), 20) == bytearray(
+        "YELLOW SUBMARINE\x04\x04\x04\x04".encode()
+    )
+    # pad bytes that are a multiple of the block size
+    assert pkcs_pad_buffer(bytearray.fromhex("971ACD01C9C7ADEACC83257926F490FF"), 16) == bytearray.fromhex(
+        "971ACD01C9C7ADEACC83257926F490FF10101010101010101010101010101010"
+    )
+
+
+def test_ecb_aes():
+    """
+    purposely working on blocks instead of the entire input
+    since we are looking to implement CBC
+    """
+    from Crypto.Cipher import AES
+    from Crypto.Util.Padding import pad, unpad
+
+    KEY = b"YELLOW SUBMARINE"
+    PLAINTEXT = b"BLACKPINK IN YOUR AREA!"
+    padded_text = pad(PLAINTEXT, AES.block_size)
+    encrypted_text = bytearray()
+    for i in range(0, len(padded_text), AES.block_size):
+        block = padded_text[i : i + AES.block_size]
+        encrypted_text += ecb_aes_encrypt(block, KEY)
+
+    decrypted_text = bytearray()
+    for i in range(0, len(encrypted_text), AES.block_size):
+        block = encrypted_text[i : i + AES.block_size]
+        decrypted_text += ecb_aes_decrypt(block, KEY)
+
+    unpadded_text = unpad(decrypted_text, AES.block_size)
+
+    assert unpadded_text == PLAINTEXT
