@@ -156,26 +156,53 @@ def ecb_aes_encrypt(block: bytes, key: bytes):
     return cipher.encrypt(block)
 
 
-def cbc_aes_decrypt(target_block, xor_block, key) -> bytes:
+def _cbc_aes_decrypt(target_block, xor_block, key) -> bytes:
     block = ecb_aes_decrypt(target_block, key)
     return bytes(b1 ^ b2 for b1, b2 in zip(block, xor_block))
 
 
-def cbc_solve(blocks: list[bytes], key: bytes, iv: bytes) -> bytes:
+def _cbc_aes_encrypt(target_block, xor_block, key) -> bytes:
+    block = bytes(b1 ^ b2 for b1, b2 in zip(target_block, xor_block))
+    return ecb_aes_encrypt(block, key)
+
+
+def cbc_aes_encrypt(blocks: list[bytes], key: bytes, iv: bytes) -> bytes:
+    """
+    Encrypts some plaintext that is already in the form of list of blocks of size AES.block_size using CBC AES
+    """
+    cipher_text = bytes()
+    previous_block = iv
+    for i in range(len(blocks)):
+        previous_block = _cbc_aes_encrypt(blocks[i], previous_block, key)
+        cipher_text += previous_block
+    return cipher_text
+
+
+def recursive_cbc_aes_encrypt(acc: bytes, blocks: list[bytes], key: bytes, iv: bytes, idx: int = 0) -> bytes:
+    """
+    Encrypts some plaintext that is already in the form of list of blocks of size AES.block_size using CBC AES
+    """
+    if idx == len(blocks):
+        return acc
+    iv = _cbc_aes_encrypt(blocks[idx], iv, key)
+    return recursive_cbc_aes_encrypt(acc + iv, blocks, key, iv, idx + 1)
+
+
+def cbc_aes_decrypt(blocks: list[bytes], key: bytes, iv: bytes) -> bytes:
     answer = bytes()
     for i in range(len(blocks) - 1, -1, -1):
         if i == 0:
-            answer = cbc_aes_decrypt(blocks[0], iv, key) + answer
+            answer = _cbc_aes_decrypt(blocks[0], iv, key) + answer
             return unpad(answer, AES.block_size)
         else:
-            answer = cbc_aes_decrypt(blocks[i], blocks[i - 1], key) + answer
+            answer = _cbc_aes_decrypt(blocks[i], blocks[i - 1], key) + answer
 
 
-def recursive_cbc_solve(acc: bytes, blocks: list[bytes], key: bytes, iv: bytes, idx: int = 1) -> bytes:
+def recursive_cbc_aes_decrypt(acc: bytes, blocks: list[bytes], key: bytes, iv: bytes, idx: int = 1) -> bytes:
     target_idx = len(blocks) - idx
     if target_idx == 0:
-        acc = unpad(cbc_aes_decrypt(blocks[target_idx], iv, key) + acc, AES.block_size)
+        acc = unpad(_cbc_aes_decrypt(blocks[target_idx], iv, key) + acc, AES.block_size)
         return acc
-    return recursive_cbc_solve(
-        cbc_aes_decrypt(blocks[target_idx], blocks[target_idx - 1], key) + acc, blocks, key, iv, idx + 1
+    return recursive_cbc_aes_decrypt(
+        _cbc_aes_decrypt(blocks[target_idx], blocks[target_idx - 1], key) + acc, blocks, key, iv, idx + 1
     )
